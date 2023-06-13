@@ -1,4 +1,4 @@
-const { Thought, User} = require('../models')
+const { User, Thought} = require('../models')
 
 module.exports = {
     getUsers(req, res) {
@@ -15,7 +15,7 @@ module.exports = {
           )
           .catch((err) => res.status(500).json(err));
       },
-      // Create a user
+      
       createUser(req, res) {
         User.create(req.body)
           .then((user) => res.json(user))
@@ -24,7 +24,7 @@ module.exports = {
             return res.status(500).json(err);
           });
       },
-      // Delete a user
+     
       deleteUser(req, res) {
         User.findOneAndDelete({ _id: req.params.userId })
           .then((user) =>
@@ -33,7 +33,8 @@ module.exports = {
               : Thought.deleteMany({ _id: { $in: user.thoughts } })
           )
           .then(() => res.json({ message: 'User and thoughts deleted!' }))
-          .catch((err) => res.status(500).json(err));
+          .catch((err) =>
+           {res.status(500).json(err)});
       },
       // Update a user
       updateUser(req, res) {
@@ -48,6 +49,33 @@ module.exports = {
               : res.json(user)
           )
           .catch((err) => res.status(500).json(err));
+      },
+
+      createFriend({ params, body }, res) {
+        User.findOneAndUpdate(
+          { _id: params.userId },
+          { $push: { friends: params.friendId } },
+          { new: true, runValidators: true }
+        )
+          .then((dbUserData) => {
+            if (!dbUserData) {
+              res.status(404).json({ message: "No user found with this id!" });
+              return;
+            }
+            res.json(dbUserData);
+          })
+          .catch((err) => res.json(err));
+      },
+    
+      removeFriend({ params }, res) {
+        console.log("remove friend", params.friendId);
+        User.findOneAndUpdate(
+          { _id: params.userId },
+          { $pull: { friends: params.friendId } },
+          { new: true }
+        )
+          .then((dbUserData) => res.json(dbUserData))
+          .catch((err) => res.json(err));
       },
     };
     
